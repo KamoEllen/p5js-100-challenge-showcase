@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100 Creative Coding Videos</title>
+   <link rel="stylesheet"  href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>P5.Js Coding Challenge</h1>
+        
+        <div class="bento-grid" id="video-grid">
+        
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const grid = document.getElementById('video-grid');
+            
+            
+            for (let i = 1; i <= 100; i++) {
+                // Create the bento item
+                const bentoItem = document.createElement('div');
+                bentoItem.className = 'bento-item';
+                
+                
+                const videoContainer = document.createElement('div');
+                videoContainer.className = 'video-container';
+                
+                
+                const video = document.createElement('video');
+                video.src = `./assets/${i}.mp4`; //in assets folder or call from previous github project folder?
+                video.loop = true;
+                video.muted = true;
+                video.autoplay = true;
+                video.playsInline = true;
+                video.controls = false; // will be on loop
+                
+               
+                const overlay = document.createElement('div');
+                overlay.className = 'video-overlay';
+                
+                
+                const counter = document.createElement('div');
+                counter.className = 'counter';
+                counter.textContent = `#${i}`;
+                
+                
+                const content = document.createElement('div');
+                content.className = 'video-content';
+                
+                // title
+                // const title = document.createElement('h2');
+                // title.textContent = `Project ${i}`;
+                
+                //layout
+                // content.appendChild(title);
+                videoContainer.appendChild(video);
+                
+                bentoItem.appendChild(videoContainer);
+                bentoItem.appendChild(overlay);
+                bentoItem.appendChild(counter);
+                bentoItem.appendChild(content);
+                
+                grid.appendChild(bentoItem);
+            }
+        });
+    </script>
+</body>
+</html>
