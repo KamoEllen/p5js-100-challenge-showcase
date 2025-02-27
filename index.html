@@ -13,13 +13,81 @@
             margin-bottom: 20px;
             font-style: italic;
         }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            padding: 20px;
+        }
+        .bento-item {
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            border-radius: 10px;
+            aspect-ratio: 1;
+        }
+        .thumbnail-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .thumbnail-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+        .video-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+        .video-container video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            pointer-events: none;
+        }
+        .counter {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 2;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>P5.Js Coding Challenge</h1>
-        <p class="click-instruction">Click on any video to play/pause</p>
-
+        <p class="click-instruction">Click on any thumbnail to play the video</p>
         <div class="bento-grid" id="video-grid"></div>
     </div>
 
@@ -27,21 +95,38 @@
         document.addEventListener('DOMContentLoaded', function() {
             const grid = document.getElementById('video-grid');
 
-            function createVideoElement(i) {
+            function createItemElement(i) {
                 const bentoItem = document.createElement('div');
                 bentoItem.className = 'bento-item';
 
+                const thumbnailContainer = document.createElement('div');
+                thumbnailContainer.className = 'thumbnail-container';
+                
+                const thumbnail = document.createElement('img');
+                thumbnail.src = `./assets/thumbnails/${i}.jpg`;
+                thumbnail.alt = `Thumbnail for video ${i}`;
+                thumbnail.loading = "lazy";
+                
+                thumbnail.style.width = "100%";
+                thumbnail.style.height = "100%";
+                thumbnail.style.objectFit = "cover";
+                
+                thumbnailContainer.appendChild(thumbnail);
+
                 const videoContainer = document.createElement('div');
                 videoContainer.className = 'video-container';
-
+                
                 const video = document.createElement('video');
-                video.preload = 'metadata';
-                video.poster = `./assets/thumbnails/${i}.jpg`;
-                video.loop = true;
                 video.muted = true;
-                video.autoplay = false;
+                video.loop = true;
                 video.playsInline = true;
                 video.controls = false;
+                
+                video.style.width = "100%";
+                video.style.height = "100%";
+                video.style.objectFit = "cover";
+                
+                videoContainer.appendChild(video);
 
                 const overlay = document.createElement('div');
                 overlay.className = 'video-overlay';
@@ -50,41 +135,22 @@
                 counter.className = 'counter';
                 counter.textContent = `#${i}`;
 
-                const content = document.createElement('div');
-                content.className = 'video-content';
-
-                videoContainer.appendChild(video);
+                bentoItem.appendChild(thumbnailContainer);
                 bentoItem.appendChild(videoContainer);
                 bentoItem.appendChild(overlay);
                 bentoItem.appendChild(counter);
-                bentoItem.appendChild(content);
 
-                let isVideoLoaded = false;
-
-                videoContainer.addEventListener('mouseenter', () => {
-                    if (!isVideoLoaded) {
-                        video.src = `./assets/${i}.mp4`;
-                        video.load();
-                    }
-                });
-
-                videoContainer.addEventListener('click', () => {
-                    if (!isVideoLoaded) {
-                        overlay.textContent = 'Loading...';
-                        video.src = `./assets/${i}.mp4`;
-                        video.load();
-                        video.play();
-                        video.addEventListener('canplaythrough', () => {
-                            overlay.style.display = 'none';
-                            isVideoLoaded = true;
-                        });
+                bentoItem.addEventListener('click', () => {
+                    if (!video.src) {
+                        video.src = `./assets/videos/${i}.mp4`;
+                        videoContainer.style.display = 'block';
+                        video.play().catch(e => console.log('Error playing video:', e));
                     } else {
                         if (video.paused) {
                             video.play();
                         } else {
                             video.pause();
                             video.currentTime = 0;
-                            overlay.style.display = 'block';
                         }
                     }
                 });
@@ -93,7 +159,7 @@
             }
 
             for (let i = 1; i <= 100; i++) {
-                const bentoItem = createVideoElement(i);
+                const bentoItem = createItemElement(i);
                 grid.appendChild(bentoItem);
             }
         });
