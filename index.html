@@ -4,14 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>100 Creative Coding Videos</title>
-    <link rel="stylesheet" href="style.css">
     <style>
-        .click-instruction {
-            font-size: 18px;
-            color: #ffffff;
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e1e1e;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            padding: 20px;
             text-align: center;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .click-instruction {
+            font-size: 1.2rem;
+            color: #ccc;
             margin-bottom: 20px;
-            font-style: italic;
         }
         .bento-grid {
             display: grid;
@@ -25,6 +37,7 @@
             overflow: hidden;
             border-radius: 10px;
             aspect-ratio: 1;
+            background: #333;
         }
         .thumbnail-container {
             position: relative;
@@ -32,43 +45,10 @@
             height: 100%;
         }
         .thumbnail-container img {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
             object-position: center;
-        }
-        .video-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-        }
-        .video-container video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .video-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-            pointer-events: none;
         }
         .counter {
             position: absolute;
@@ -82,6 +62,49 @@
             pointer-events: none;
             z-index: 2;
         }
+        .video-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .video-popup video {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+        }
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            color: #fff;
+            z-index: 3;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -91,9 +114,20 @@
         <div class="bento-grid" id="video-grid"></div>
     </div>
 
+    <div class="video-popup" id="video-popup">
+        <div class="loading-overlay" id="loading-overlay">
+            <div class="loading-spinner"></div>
+            <span>Loading...</span>
+        </div>
+        <video id="popup-video" controls></video>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const grid = document.getElementById('video-grid');
+            const videoPopup = document.getElementById('video-popup');
+            const popupVideo = document.getElementById('popup-video');
+            const loadingOverlay = document.getElementById('loading-overlay');
 
             function createItemElement(i) {
                 const bentoItem = document.createElement('div');
@@ -105,54 +139,33 @@
                 const thumbnail = document.createElement('img');
                 thumbnail.src = `./assets/thumbnails/${i}.jpg`;
                 thumbnail.alt = `Thumbnail for video ${i}`;
-                thumbnail.loading = "lazy";
-                
-                thumbnail.style.width = "100%";
-                thumbnail.style.height = "100%";
-                thumbnail.style.objectFit = "cover";
+                thumbnail.loading = "lazy"; //see thumbnails fast ,better user experience. video and thumbnail loading at the same time made the performace weak.
                 
                 thumbnailContainer.appendChild(thumbnail);
-
-                const videoContainer = document.createElement('div');
-                videoContainer.className = 'video-container';
-                
-                const video = document.createElement('video');
-                video.muted = true;
-                video.loop = true;
-                video.playsInline = true;
-                video.controls = false;
-                
-                video.style.width = "100%";
-                video.style.height = "100%";
-                video.style.objectFit = "cover";
-                
-                videoContainer.appendChild(video);
-
-                const overlay = document.createElement('div');
-                overlay.className = 'video-overlay';
 
                 const counter = document.createElement('div');
                 counter.className = 'counter';
                 counter.textContent = `#${i}`;
 
                 bentoItem.appendChild(thumbnailContainer);
-                bentoItem.appendChild(videoContainer);
-                bentoItem.appendChild(overlay);
                 bentoItem.appendChild(counter);
 
-                bentoItem.addEventListener('click', () => {
-                    if (!video.src) {
-                        video.src = `./assets/videos/${i}.mp4`;
-                        videoContainer.style.display = 'block';
-                        video.play().catch(e => console.log('Error playing video:', e));
-                    } else {
-                        if (video.paused) {
-                            video.play();
-                        } else {
-                            video.pause();
-                            video.currentTime = 0;
-                        }
-                    }
+                bentoItem.addEventListener('click', async () => {
+                    videoPopup.style.display = 'flex';
+                    loadingOverlay.style.display = 'flex';
+
+                    popupVideo.src = `./assets/videos/${i}.mp4`;
+
+                    popupVideo.onloadeddata = () => {
+                        loadingOverlay.style.display = 'none';
+                        popupVideo.play();
+                    };
+
+                    popupVideo.onerror = () => {
+                        loadingOverlay.style.display = 'none';
+                        videoPopup.style.display = 'none';
+                        console.error('Failed to load the video.');
+                    };
                 });
 
                 return bentoItem;
@@ -162,6 +175,14 @@
                 const bentoItem = createItemElement(i);
                 grid.appendChild(bentoItem);
             }
+
+            videoPopup.addEventListener('click', (e) => {
+                if (e.target === videoPopup) {
+                    popupVideo.pause();
+                    popupVideo.src = '';
+                    videoPopup.style.display = 'none';
+                }
+            });
         });
     </script>
 </body>
